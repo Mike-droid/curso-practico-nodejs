@@ -1,0 +1,174 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "Una red social en NodeJS",
+    "version": "1.0.0",
+    "title": "RedSocialNode"
+  },
+  "host": "localhost:3000",
+  "basePath": "/api",
+  "tags": [
+    {
+      "name": "user",
+      "description": "Operaciones sobre el usuario"
+    }
+  ],
+  "schemes": [
+    "http"
+  ],
+  "paths": {
+    "/user": {
+      "get": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Lista los usuarios",
+        "operationId": "listUser",
+        "responses": {
+          "default": {
+            "description": "Lista de usuarios"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Crea un usuario",
+        "description": "Crea un usuario en nuestra app",
+        "operationId": "createUser",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Usuario creado",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Operación exitosa"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Actualiza un usuario",
+        "description": "Actualiza un usuario en nuestra app",
+        "operationId": "upsertUser",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Usuario actualizado",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Usuario actualizado con éxito"
+          }
+        }
+      }
+    },
+    "/user/{userId}": {
+      "delete": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Elimina a un usuario",
+        "description": "Elimina a un usuario de nuestra app",
+        "operationId": "deleteUser",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "type": "string",
+            "description": "Usuario eliminado",
+            "required": true
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Usuario eliminado con éxito"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Busca a un usuario",
+        "description": "Busca a un usuario de nuestra app",
+        "operationId": "getUser",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "type": "string",
+            "description": "Usuario buscado",
+            "required": true
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Usuario encontrado con éxito"
+          }
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "api_key": {
+      "type": "apiKey",
+      "name": "api_key",
+      "in": "header"
+    }
+  },
+  "definitions": {
+    "User": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      }
+    },
+    "ApiResponse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "type": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "externalDocs": {
+    "description": "Find out more about Swagger",
+    "url": "http://swagger.io"
+  }
+}

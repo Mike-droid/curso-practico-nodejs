@@ -1,0 +1,26 @@
+{
+  "name": "cursopracticonodejs",
+  "version": "1.0.0",
+  "description": "## Introducción al proyecto del curso y su arquitectura",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mike-droid/curso-practico-nodejs.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Mike-droid/curso-practico-nodejs/issues"
+  },
+  "homepage": "https://github.com/Mike-droid/curso-practico-nodejs#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "nanoid": "^3.1.25",
+    "nodemon": "^2.0.12",
+    "swagger-ui-express": "^4.1.6"
+  }
+}
