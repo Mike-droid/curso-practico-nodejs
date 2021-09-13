@@ -6,9 +6,9 @@ exports.success = function(req, res, message, status){
 
   res.status(status).send({
     error: false,
-    status: status,
-    body: message
-  })
+    status: statusCode,
+    body: statusMessage
+  });
 }
 
 exports.error = function(req, res, message, status){
@@ -16,8 +16,8 @@ exports.error = function(req, res, message, status){
   let statusMessage = message || 'Internal Server Error';
 
   res.status(statusCode).send({
-    error: false,
-    status: status,
-    body: message
-  })
+    error: true,
+    status: statusCode,
+    body: statusMessage
+  });
 }
