@@ -1,5 +1,6 @@
-const auth = require('../../../auth')
-const TABLA = 'auth'
+const bcrypt = require('bcrypt');
+const auth = require('../../../auth');
+const TABLA = 'auth';
 
 module.exports = function(injectedStore) {
   let store = injectedStore
@@ -9,24 +10,30 @@ module.exports = function(injectedStore) {
 
   async function login(username, password) {
     const data = await store.query(TABLA, { username: username });
-    if (data.password === password) {
-      return auth.sign(data);
-    } else {
-      throw new Error('Usuario o contraseña incorrecta');
-    }
+
+    return bcrypt.compare(password, data.password)
+      .then(sonIguales => {
+        if (sonIguales) {
+          return auth.sign(data);
+        } else {
+          throw new Error('Usuario o contraseña incorrecta');
+        }
+      })
   }
 
-  function upsert(data) {
+  async function upsert(data) {
     const authData = {
       id: data.id
     }
 
     if(data.username) {
-      authData.username = data.username
+      authData.username = data.username;
     }
 
     if (data.password) {
-      authData.password = data.password
+      authData.password = await bcrypt.hash(data.password, 10);
+      //* El segundo parámetro es cuántas veces se va a repetir el hash.
+      //* Cuantas más veces se repita, más lenta será la genereación pero más seguro será el hash.
     }
 
     return store.upsert(TABLA, authData);

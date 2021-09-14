@@ -421,3 +421,416 @@ No se recomienda guardar las contraseñas con los usuarios. Deben estar en difer
 ### Autenticación: login
 
 ***NUNCA*** debemos guardar la contraseña como texto plano. Siempre deben estar encriptadas.
+
+### Autenticación: cifrar contraseñas para evitar problemas de seguridad
+
+Debemos usar librerías de criptografía. Vamos a usar lo que usan los expertos en seguridad: `npm i bcrypt`.
+
+Actualizamos controller.js:
+
+```javascript
+const bcrypt = require('bcrypt');
+const auth = require('../../../auth');
+const TABLA = 'auth';
+
+module.exports = function(injectedStore) {
+  let store = injectedStore
+  if (!store) {
+    store = require('../../../store/dummy')
+  }
+
+  async function login(username, password) {
+    const data = await store.query(TABLA, { username: username });
+
+    return bcrypt.compare(password, data.password)
+      .then(sonIguales => {
+        if (sonIguales) {
+          return auth.sign(data);
+        } else {
+          throw new Error('Usuario o contraseña incorrecta');
+        }
+      })
+  }
+
+  async function upsert(data) {
+    const authData = {
+      id: data.id
+    }
+
+    if(data.username) {
+      authData.username = data.username;
+    }
+
+    if (data.password) {
+      authData.password = await bcrypt.hash(data.password, 10);
+      //* El segundo parámetro es cuántas veces se va a repetir el hash.
+      //* Cuantas más veces se repita, más lenta será la genereación pero más seguro será el hash.
+    }
+
+    return store.upsert(TABLA, authData);
+  }
+
+  return {
+    upsert,
+    login
+  }
+}
+```
+
+### Autenticación: gestión de permisos
+
+Creamos `user/secure.js`:
+
+```javascript
+const auth = require('../../../auth');
+
+module.exports = function checkAuth(action) {
+  function middleware(req, res, next) {
+    switch (action) {
+      case 'update':
+        const owner = req.body.id;
+        auth.check.own(req, owner);
+        break;
+      default:
+        next();
+        break;
+    }
+
+    return middleware;
+  }
+}
+```
+
+Actualizamos `./auth/index.js`:
+
+```javascript
+const { header } = require('express/lib/request');
+const jwt = require('jsonwebtoken');
+const config = require('../config');
+
+const secret = config.jwt.secret;
+
+function sign(data) {
+  return jwt.sign(data, secret);
+}
+
+function verify(token) {
+  return jwt.verify(token, secret);
+}
+
+const check = {
+  own: function(req, owner) {
+    const decoded = decodeHeader(req);
+    console.log(decoded);
+  }
+}
+
+function getToken(auth) {
+  if (!auth) {
+    throw new Error('¡No viene token!');
+  }
+
+  if (auth.indexOf('Bearer ') === -1) {
+    throw new Error('¡Formato inválido!');
+  }
+
+  let token = auth.replace('Bearer ', '');
+
+  return token;
+}
+
+function decodeHeader(req) {
+  const authorization = req.headers.authorization || '';
+  const token = getToken(authorization);
+  const decoded = verify(token);
+
+  req.user = decoded;
+
+  return decoded;
+}
+
+module.exports = {
+  sign
+}
+```
+
+Actualizamos `./config.js`:
+
+```javascript
+module.exports = {
+  api: {
+    port: process.env.API_PORT || 3000,
+  },
+  jwt: {
+    secret: process.env.JWT_SECRET || 'notASecret!'
+  }
+}
+```
+
+### Comprobar verificación con token
+
+Actualizamos `auth/index.js`:
+
+```javascript
+const { header } = require('express/lib/request');
+const jwt = require('jsonwebtoken');
+const config = require('../config');
+
+const secret = config.jwt.secret;
+
+function sign(data) {
+  return jwt.sign(data, secret);
+}
+
+function verify(token) {
+  return jwt.verify(token, secret);
+}
+
+const check = {
+  own: function(req, owner) {
+    const decoded = decodeHeader(req);
+    console.log(decoded);
+
+    //* Comprobar si es o no propio
+    if (decoded.id !== owner) {
+      throw new Error('¡No tienes permisos!');
+    }
+  }
+}
+
+function getToken(auth) {
+  if (!auth) {
+    throw new Error('¡No viene token!');
+  }
+
+  if (auth.indexOf('Bearer ') === -1) {
+    throw new Error('¡Formato inválido!');
+  }
+
+  let token = auth.replace('Bearer ', '');
+
+  return token;
+}
+
+function decodeHeader(req) {
+  const authorization = req.headers.authorization || '';
+  const token = getToken(authorization);
+  const decoded = verify(token);
+
+  req.user = decoded;
+
+  return decoded;
+}
+
+module.exports = {
+  sign,
+  check
+}
+```
+
+Actualizamos `api/components/user/secure.js`:
+
+```javascript
+const auth = require('../../../auth');
+
+module.exports = function checkAuth(action) {
+  function middleware(req, res, next) {
+    switch (action) {
+      case 'update':
+        const owner = req.body.id;
+        auth.check.own(req, owner);
+        next();
+        break;
+      default:
+        next();
+    }
+  }
+
+  return middleware;
+}
+```
+
+Actualizamos `api/components/user/network.js`:
+
+```javascript
+const express = require('express');
+
+const secure = require('./secure');
+const response = require('../../../network/response');
+const Controller = require('./index');
+
+const router = express.Router();
+
+// Routes
+router.get('/', list);
+router.get('/:id', get);
+router.post('/', upsert);
+router.put('/', secure('update'), upsert);
+
+function list(req, res) {
+  Controller.list()
+    .then(lista => {
+      response.success(req, res, lista, 200);
+    })
+    .catch(error => {
+      response.error(req, res, error.message, 500);
+    })
+}
+
+function get(req, res) {
+  Controller.get(req.params.id)
+    .then(user => {
+      response.success(req, res, user, 200);
+    })
+    .catch(error => {
+      response.error(req, res, error.message, 500);
+    })
+}
+
+function upsert(req, res) {
+  Controller.upsert(req.body)
+    .then(user => {
+      response.success(req, res, user, 201);
+    })
+    .catch(error => {
+      response.error(req, res, error.message, 500);
+    })
+}
+
+module.exports = router;
+```
+
+Al hacer PUT necesitamos tener el mismo ID que se obtiene después de usar el Bearer Token, de no ser así tendremos un error por los permisos.
+
+### Gestión avanzada de errores: Throw
+
+Al lanzar un error nos muestra la ubicación de los archivos además de la linea donde se encuentra el error. ¡Esto es algo benificioso **para los hackers**! No podemos permitirlo.
+
+Debemos gestionar todos los errores desde un mismo lugar.
+
+Creamos `./network/errors.js`:
+
+```javascript
+const response = require('./response');
+
+function errors(error, req, res, next) {
+  console.error(`[Error]: ${error}`);
+
+  const message = error.message || 'Error interno';
+  const status = error.statusCode || 500;
+
+  response.error(res, res, message, status);
+}
+
+module.exports = errors;
+```
+
+Actualizamos `./api/index.js`:
+
+```javascript
+//* Creamos el servidor en este archivo
+
+const express = require('express')
+
+const swaggerUi = require('swagger-ui-express')
+
+const config = require('../config')
+const auth = require('./components/auth/network')
+const user = require('./components/user/network')
+const errors = require('../network/errors')
+
+const app = express()
+const port = config.api.port
+app.use(express.urlencoded({extended: true})) //* Así ya no tenemos que instalar body-parser
+app.use(express.json()) //! Pero es importante usar esta línea también
+
+const swaggerDoc = require('./swagger.json')
+
+//* ROUTER
+app.get('/', (req, res) => res.send('Hola mundo desde Node JS'))
+app.use('/api/user', user)
+app.use('/api/auth', auth)
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc))
+
+//! Es importante colocar esta línea al final de las de ROUTER
+app.use(errors)
+
+app.listen(port, () => console.log(`API escuchando en el puerto ${port}`))
+```
+
+Creamos `./utils/error.js`:
+
+```javascript
+//* Creamos un error personalizado
+
+function error(message, code) {
+  let new_error = new Error(message);
+
+  if (code) {
+    new_error.statusCode = code;
+  }
+
+  return new_error;
+}
+
+module.exports = error;
+```
+
+Actualizamos `./auth/index.js`:
+
+```javascript
+const jwt = require('jsonwebtoken');
+const config = require('../config');
+const error = require('../utils/error');
+
+const secret = config.jwt.secret;
+
+function sign(data) {
+  return jwt.sign(data, secret);
+}
+
+function verify(token) {
+  return jwt.verify(token, secret);
+}
+
+const check = {
+  own: function(req, owner) {
+    const decoded = decodeHeader(req);
+    console.log(decoded);
+
+    //* Comprobar si es o no propio
+    if (decoded.id !== owner) {
+      throw error('¡No tienes permisos!', 401);
+    }
+  }
+}
+
+function getToken(auth) {
+  if (!auth) {
+    throw new Error('¡No viene token!');
+  }
+
+  if (auth.indexOf('Bearer ') === -1) {
+    throw new Error('¡Formato inválido!');
+  }
+
+  let token = auth.replace('Bearer ', '');
+
+  return token;
+}
+
+function decodeHeader(req) {
+  const authorization = req.headers.authorization || '';
+  const token = getToken(authorization);
+  const decoded = verify(token);
+
+  req.user = decoded;
+
+  return decoded;
+}
+
+module.exports = {
+  sign,
+  check
+}
+```
