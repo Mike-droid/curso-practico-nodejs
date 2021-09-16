@@ -1069,3 +1069,5 @@ También podemos reiniciar servicios con `pm2 restart {index}`.
 Serverless significa que estarán públicos nuestros microservicios.
 
 Hoy en día Zeit Now ahora es [Vercel](https://vercel.com/), son los creadores del framework backend `Next.js`.
+
+Debemos instalar `npm i -g vercel-cli` , para ver cambios en local hacemos `vercel dev` y cuando tengamos todo listo para producción simplemente hay que hacer `git push` en la rama main.
