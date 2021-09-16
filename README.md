@@ -1049,3 +1049,15 @@ Instalamos `npm i request`.
 ### Separando los posts a un microservicio
 
 Antes de hacer microservicios, asegúrate de que tengan sentido hacerlos para tu aplicación y que no te vayan a dar problemas cuando escales.
+
+### Gestión de microservicios con PM2
+
+[PM2](https://pm2.keymetrics.io/) es un gestor de procesos de Node. Se instala con `npm i pm2 -g`. El comando para usarlo es `pm2 start`.
+
+Podemos usar `pm2 logs` para ver los logs de cada microservicio. También `pm2 status` para ver los procesos que están corriendo.
+
+Podemos hacer `pm2 start api/index.js` & `pm2 start mysql/index.js` & `pm2 post/index.js` para iniciar los microservicios.
+
+Para detener los servicios podemos llamar al índex de los archivos: `pm2 stop {index}`.
+
+También podemos reiniciar servicios con `pm2 restart {index}`.
