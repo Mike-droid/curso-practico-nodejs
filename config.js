@@ -7,13 +7,13 @@ module.exports = {
     port: process.env.POST_PORT || 3002,
   },
   jwt: {
-    secret: process.env.JWT_SECRET || 'notASecret!'
+    secret: process.env.JWT_SECRET || ''
   },
   mysql: {
-    host: process.env.MYSQL_HOST || 'sql5.freemysqlhosting.net',
-    user: process.env.MYSQL_USER || 'sql5437281',
-    password: process.env.MYSQL_PASS || 'xMYIzS32wz',
-    database: process.env.MYSQL_DB || 'sql5437281',
+    host: process.env.MYSQL_HOST || '',
+    user: process.env.MYSQL_USER || '',
+    password: process.env.MYSQL_PASS || '',
+    database: process.env.MYSQL_DB || '',
   },
   mysqlService: {
     host: process.env.MYSQL_SRV_HOST || 'localhost',

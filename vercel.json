@@ -1,5 +1,12 @@
 {
   "version": 2,
+  "env": {
+    "MYSQL_HOST": "sql5.freemysqlhosting.net",
+    "MYSQL_USER": "sql5437281",
+    "MYSQL_PASS": "xMYIzS32wz",
+    "MYSQL_DB": "sql5437281",
+    "JWT_SECRET": "notASecret!"
+  },
   "builds": [
     {
       "src": "api/index.js",
