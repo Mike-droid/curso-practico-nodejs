@@ -21,6 +21,11 @@ const check = {
     if (decoded.id !== owner) {
       throw error('¡No tienes permisos!', 401);
     }
+  },
+
+  logged: function(req) {
+    const decoded = decodeHeader(req);
+    console.log(decoded);
   }
 }
 

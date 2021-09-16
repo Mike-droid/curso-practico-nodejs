@@ -7,6 +7,7 @@ const swaggerUi = require('swagger-ui-express')
 const config = require('../config')
 const auth = require('./components/auth/network')
 const user = require('./components/user/network')
+const post = require('./components/post/network')
 const errors = require('../network/errors')
 
 const app = express()
@@ -20,6 +21,7 @@ const swaggerDoc = require('./swagger.json')
 app.get('/', (req, res) => res.send('Hola mundo desde Node JS'))
 app.use('/api/user', user)
 app.use('/api/auth', auth)
+app.use('/api/post', post)
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc))
 
 //! Es importante colocar esta línea al final de las de ROUTER

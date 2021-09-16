@@ -834,3 +834,96 @@ module.exports = {
   check
 }
 ```
+
+## Almacenando datos: MySQL
+
+### Base de datos real: MySQL
+
+Podemos hacer pruebas con MySQL en una página de internet llamada [Free Remote MySQL](https://remotemysql.com/).
+
+También existe [Free MySQL Hosting](https://www.freemysqlhosting.net/).
+
+Debemos instalar `npm i mysql`.
+
+Vamos a dejar de usar 'dummy.js' para empezar a usar `mysql.js`:
+
+```javascript
+const mysql = require('mysql');
+
+const config = require('../config');
+
+const dbconf = {
+  host: config.mysql.host,
+  user: config.mysql.user,
+  password: config.mysql.password,
+  database: config.mysql.database,
+};
+
+
+let connection;
+
+function handleConnection() {
+  connection = mysql.createConnection(dbconf);
+
+  connection.connect((error) => {
+    if (error) {
+      console.log(error);
+      setTimeout(handleConnection, 2000);
+    } else {
+      console.log('Connected to MySQL');
+    }
+  });
+
+  connection.on('error', (error) => {
+    console.error(`[db error]: ${error}`);
+    if (error.code === 'PROTOCOL_CONNECTION_LOST') {
+      handleConnection();
+    } else {
+      throw error;
+    }
+  })
+}
+
+handleConnection();
+
+function list(table) {
+  return new Promise((resolve, reject) => {
+    connection.query(`SELECT * FROM ${table}`, (error, data) => {
+      error ? reject(error) : resolve(data);
+    });
+  })
+}
+
+module.exports = {
+  list,
+};
+```
+
+Necesitamos la configuración para poder conectarnos, en `config.js`:
+
+```javascript
+module.exports = {
+  api: {
+    port: process.env.API_PORT || 3000,
+  },
+  jwt: {
+    secret: process.env.JWT_SECRET || 'notASecret!'
+  },
+  mysql: {
+    host: process.env.MYSQL_HOST || 'sql5.freemysqlhosting.net',
+    user: process.env.MYSQL_USER || 'sql5437281',
+    password: process.env.MYSQL_PASS || 'xMYIzS32wz',
+    database: process.env.MYSQL_DB || 'sql5437281',
+  }
+}
+```
+
+y en `auth/index.js` junto con `user/index.js` modificamos una línea:
+
+`const store = require('../../../store/mysql')`
+
+### Completando la base de datos
+
+### Relacionando entidades: follow
+
+### Post y likes
