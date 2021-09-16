@@ -1045,3 +1045,7 @@ Ahora si hacemos GET `http://localhost:3001/post` o GET `http://localhost:3001/u
 Para poder escalar esto, vamos a generar un constructor de bases de datos remotas y un archivo que genere nuestra base de datos remota 😁.
 
 Instalamos `npm i request`.
+
+### Separando los posts a un microservicio
+
+Antes de hacer microservicios, asegúrate de que tengan sentido hacerlos para tu aplicación y que no te vayan a dar problemas cuando escales.
