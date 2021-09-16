@@ -927,3 +927,115 @@ y en `auth/index.js` junto con `user/index.js` modificamos una línea:
 ### Relacionando entidades: follow
 
 ### Post y likes
+
+## Microservicios en Node
+
+### Microservicios: pros y contras
+
+Un microservicio es una pequeña aplicación que se encarga de una parte de un software más complejo de manera aislada, y se comunica con el resto del software mediante diferentes métodos: peticiones HTTP, o algún sistema de colas. `micro.js` es una librería muy pequeña (alrededor de 100 líneas de código) de JavaScript, que nos permite usar Node.js para crear fácilmente microservicios que funcionen sobre el protocolo HTTP, y haciendo uso de Async/Await y todas las características que se incluyeron en ECMAScript 2015 para facilitarnos el programarlos.
+
+Al tener toda la estructura en 1 API, si se cae el servicio toda la estructura también se cae. Es bueno poder separar los servicios de la estructura para tener microservicios.
+
+Consejo:
+
+> Aprende a hacer microservicios, hazlos bien, pero si no los necesitas, no los despliegues.
+
+### Separando la base de datos a un microservicio
+
+Creamos `./mysql/index.js`:
+
+```javascript
+const express = require("express");
+const app = express();
+const config = require('../config')
+const router = require('./network')
+
+
+app.use(express.urlencoded({extended: true}))
+app.use(express.json())
+
+//* RUTAS
+app.use('/', router)
+
+app.listen(config.mysqlService.port, () => {
+  console.log(`Servidor MySQL escuchando en el puerto ${config.mysqlService.port}`);
+})
+```
+
+Creamos `./mysql/network.js`:
+
+```javascript
+const express = require('express');
+
+const response = require('../network/response');
+const Store = require('../store/mysql');
+
+const router = express.Router();
+
+router.get('/:tabla', list)
+router.get('/:tabla/:id', get)
+router.post('/:tabla', insert)
+router.put('/:tabla', upsert)
+
+async function list(req, res, next) {
+  try {
+    const datos = await Store.list(req.params.tabla);
+    response.success(req, res, datos, 200);
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function get(req, res, next) {
+  try {
+    const datos = await Store.get(req.params.tabla, req.params.id);
+    response.success(req, res, datos, 200);
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function insert(req, res, next) {
+  try {
+    const datos = await Store.insert(req.params.tabla, req.body);
+    response.success(req, res, datos, 201);
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function upsert(req, res, next) {
+  try {
+    const datos = await Store.upsert(req.params.tabla);
+    response.success(req, res, datos, 200);
+  } catch (error) {
+    next(error);
+  }
+}
+
+module.exports = router;
+```
+
+Actualizamos `./config.js`:
+
+```javascript
+module.exports = {
+  api: {
+    port: process.env.API_PORT || 3000,
+  },
+  jwt: {
+    secret: process.env.JWT_SECRET || 'notASecret!'
+  },
+  mysql: {
+    host: process.env.MYSQL_HOST || 'sql5.freemysqlhosting.net',
+    user: process.env.MYSQL_USER || 'sql5437281',
+    password: process.env.MYSQL_PASS || 'xMYIzS32wz',
+    database: process.env.MYSQL_DB || 'sql5437281',
+  },
+  mysqlService: {
+    port: process.env.MYSQL_SRV_PORT ||3001
+  }
+}
+```
+
+Ahora si hacemos GET `http://localhost:3001/post` o GET `http://localhost:3001/user` obtendremos la información de la base de datos.
