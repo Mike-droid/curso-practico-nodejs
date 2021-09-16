@@ -1039,3 +1039,9 @@ module.exports = {
 ```
 
 Ahora si hacemos GET `http://localhost:3001/post` o GET `http://localhost:3001/user` obtendremos la información de la base de datos.
+
+### Conectando con nuestro microservicio de datos
+
+Para poder escalar esto, vamos a generar un constructor de bases de datos remotas y un archivo que genere nuestra base de datos remota 😁.
+
+Instalamos `npm i request`.
