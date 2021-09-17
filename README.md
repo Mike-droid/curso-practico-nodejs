@@ -1075,3 +1075,97 @@ Debemos instalar `npm i -g vercel-cli` , para ver cambios en local hacemos `verc
 ### Variables de entorno y despliegue local
 
 Los valores que teníamos en `config.js` ahora están siendo usados en `vercel.json`.
+
+## Cacheando nuestra aplicación
+
+### Caché como un microservicio | Redis
+
+Caché es una forma más rápida de servir contenido que ya conocemos. Es información en memoria, por lo cual es rapídisima. Para esto usaremos [Redis](https://redis.io/).
+
+Cremos la carpeta 'cache' y dentro `index-cache.js`:
+
+```javascript
+const express = require("express");
+const config = require('../config');
+const router = require('./network');
+
+const app = express();
+app.use(express.urlencoded({extended: true}))
+app.use(express.json())
+
+//* RUTAS
+app.use('/', router)
+
+const port = config.cacheService.port
+app.listen(port, () => {
+  console.log(`Servidor caché Redis escuchando en el puerto ${port}`);
+})
+```
+
+Y también `network.js`:
+
+```javascript
+const express = require('express');
+
+const response = require('../network/response');
+const Store = require('../store/redis');
+
+const router = express.Router();
+
+router.get('/:tabla', list)
+router.get('/:tabla/:id', get)
+router.put('/:tabla', upsert)
+
+async function list(req, res, next) {
+  try {
+    const datos = await Store.list(req.params.tabla);
+    response.success(req, res, datos, 200);
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function get(req, res, next) {
+  try {
+    const datos = await Store.get(req.params.tabla, req.params.id);
+    response.success(req, res, datos, 200);
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function upsert(req, res, next) {
+  try {
+    const datos = await Store.upsert(req.params.tabla);
+    response.success(req, res, datos, 200);
+  } catch (error) {
+    next(error);
+  }
+}
+
+module.exports = router;
+```
+
+En `store/remote-cache.js`:
+
+```javascript
+const remote = require('./remote')
+const config = require('../config')
+
+module.exports = new remote(config.cacheService.host, config.cacheService.port)
+```
+
+Y también creamos un archivo `redis.js` que por el momento está vacío.
+
+Finalmente agregamos al fincal de `config.js`:
+
+```javascript
+cacheService: {
+  host: process.env.cache_SRV_HOST || 'localhost',
+  port: process.env.cache_SRV_PORT || 3003,
+}
+```
+
+### Conectando el microservicio a Redis
+
+Creamos nuestra cuenta en Redis e instalamos `npm i redis`.
