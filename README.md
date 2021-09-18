@@ -1171,3 +1171,13 @@ cacheService: {
 Creamos nuestra cuenta en Redis e instalamos `npm i redis`.
 
 ### Conectar la API al caché
+
+## Puesta en producción en virtual machine
+
+### Desplegando los servicios de Node
+
+Debemos hacer una máquina en [Google Cloud](https://cloud.google.com/compute)
+
+### Nginx como proxy inverso
+
+No exponemos valores con Node, esto es inseguro. Nginx es un proxy intermedio.
