@@ -1169,3 +1169,5 @@ cacheService: {
 ### Conectando el microservicio a Redis
 
 Creamos nuestra cuenta en Redis e instalamos `npm i redis`.
+
+### Conectar la API al caché
